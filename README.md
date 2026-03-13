@@ -37,7 +37,7 @@ python main.py
 
 ### 3. Open the web UI
 
-Navigate to **http://localhost:8008** in your browser.
+Navigate to **https://localhost:8008** in your browser.
 
 You will see your device name and cast device ID, each with a **Copy** button.
 

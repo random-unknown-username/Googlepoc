@@ -3,7 +3,7 @@ Google TV Emulator
 ==================
 Emulates a Google TV / Chromecast device on the local network by:
   - Announcing itself via mDNS under the _googlecast._tcp.local. service type
-  - Serving the standard Chromecast discovery endpoints
+  - Serving the standard Chromecast discovery endpoints over HTTPS (TLS)
   - Displaying a web UI where the device name and cast device ID can be copied
 
 Usage
@@ -11,16 +11,22 @@ Usage
     pip install -r requirements.txt
     python main.py
 
-Then open  http://localhost:8008  in a browser.
+Then open  https://localhost:8008  in a browser.
 The device will also appear in Google Home and compatible cast apps.
 """
 
+import datetime
+import ipaddress
 import json
 import os
 import socket
-import threading
+import ssl
 import uuid
 
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 from flask import Flask, jsonify, render_template, request
 from zeroconf import ServiceInfo, Zeroconf
 
@@ -28,8 +34,11 @@ from zeroconf import ServiceInfo, Zeroconf
 # Persistent device identity
 # ---------------------------------------------------------------------------
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), ".device_config.json")
+CERT_FILE = os.path.join(os.path.dirname(__file__), ".ssl_cert.pem")
+KEY_FILE = os.path.join(os.path.dirname(__file__), ".ssl_key.pem")
 
 CAST_PORT = 8008
+CERT_VALIDITY_DAYS = 3650  # ~10 years
 
 
 def _load_or_create_config() -> dict:
@@ -134,6 +143,56 @@ def _get_local_ip() -> str:
         return "127.0.0.1"
 
 
+def _get_or_create_ssl_cert() -> tuple[str, str]:
+    """Return (cert_path, key_path) for a self-signed TLS certificate.
+
+    A new RSA-2048 / SHA-256 certificate valid for 10 years is generated on
+    the first call and persisted to disk so that subsequent runs reuse the
+    same certificate (important for clients that pin or cache it).
+    """
+    if os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE):
+        return CERT_FILE, KEY_FILE
+
+    local_ip = _get_local_ip()
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+    subject = issuer = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, local_ip)]
+    )
+    san = x509.SubjectAlternativeName(
+        [
+            x509.DNSName("localhost"),
+            x509.IPAddress(ipaddress.ip_address(local_ip)),
+        ]
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now)
+        .not_valid_after(now + datetime.timedelta(days=CERT_VALIDITY_DAYS))
+        .add_extension(san, critical=False)
+        .sign(key, hashes.SHA256())
+    )
+
+    with open(CERT_FILE, "wb") as fh:
+        fh.write(cert.public_bytes(serialization.Encoding.PEM))
+    with open(KEY_FILE, "wb") as fh:
+        fh.write(
+            key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+    return CERT_FILE, KEY_FILE
+
+
 def start_mdns_broadcast() -> tuple[Zeroconf, ServiceInfo]:
     """Register this device as a _googlecast._tcp.local. mDNS service."""
     local_ip = _get_local_ip()
@@ -182,15 +241,25 @@ def main():
     print("=" * 60)
     print(f"  Device name  : {DEVICE_NAME}")
     print(f"  Cast device ID: {CAST_DEVICE_ID}")
-    print(f"  Web UI        : http://localhost:{CAST_PORT}")
+    print(f"  Web UI        : https://localhost:{CAST_PORT}")
     print("=" * 60)
 
     # Start mDNS broadcast in a background thread so Flask can run normally
     zc, info = start_mdns_broadcast()
 
+    cert_file, key_file = _get_or_create_ssl_cert()
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_ctx.load_cert_chain(cert_file, key_file)
+
     try:
-        # host="0.0.0.0" so LAN devices can reach the HTTP endpoints
-        app.run(host="0.0.0.0", port=CAST_PORT, debug=False, use_reloader=False)
+        # host="0.0.0.0" so LAN devices can reach the HTTPS endpoints
+        app.run(
+            host="0.0.0.0",
+            port=CAST_PORT,
+            debug=False,
+            use_reloader=False,
+            ssl_context=ssl_ctx,
+        )
     finally:
         print("[mDNS] Unregistering service …")
         zc.unregister_service(info)
