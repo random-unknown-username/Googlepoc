@@ -1,6 +1,10 @@
 # Device identity (generated on first run – do not commit)
 .device_config.json
 
+# TLS certificate and key (generated on first run – do not commit)
+.ssl_cert.pem
+.ssl_key.pem
+
 # Python
 __pycache__/
 *.py[cod]
