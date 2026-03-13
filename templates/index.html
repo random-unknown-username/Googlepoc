@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google TV Emulator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      background: #0f1923;
+      color: #e8eaed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1e2a35;
+      border-radius: 16px;
+      padding: 40px 48px;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1px solid #2d3f50;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .logo-row svg { flex-shrink: 0; }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .logo-text span { color: #4285F4; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0d3b26;
+      color: #34a853;
+      border: 1px solid #34a853;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #34a853;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #9aa0a6;
+      margin-bottom: 6px;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      background: #121d28;
+      border: 1px solid #2d3f50;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    .field-value {
+      flex: 1;
+      font-size: 16px;
+      font-family: 'Roboto Mono', monospace;
+      word-break: break-all;
+      color: #e8eaed;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid #4285F4;
+      color: #4285F4;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn:hover {
+      background: #4285F4;
+      color: #fff;
+    }
+
+    .copy-btn.copied {
+      background: #34a853;
+      border-color: #34a853;
+      color: #fff;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #2d3f50;
+      margin: 24px 0;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .meta-item .meta-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #9aa0a6;
+      margin-bottom: 4px;
+    }
+
+    .meta-item .meta-value {
+      font-size: 14px;
+      color: #bdc1c6;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #5f6368;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="logo-row">
+      <!-- Google TV icon -->
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="10" fill="#1a73e8"/>
+        <rect x="8" y="12" width="24" height="14" rx="2" fill="none" stroke="white" stroke-width="2"/>
+        <path d="M16 26 L16 30 M24 26 L24 30 M13 30 L27 30" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="28" cy="15" r="3" fill="#34a853"/>
+      </svg>
+      <div class="logo-text"><span>Google</span> TV Emulator</div>
+    </div>
+
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      Broadcasting on local network
+    </div>
+
+    <div class="field-label">Device Name</div>
+    <div class="field-row">
+      <div class="field-value" id="device-name">{{ device_name }}</div>
+      <button class="copy-btn" onclick="copyField('device-name', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+
+    <div class="field-label">Cast Device ID</div>
+    <div class="field-row">
+      <div class="field-value" id="cast-device-id">{{ cast_device_id }}</div>
+      <button class="copy-btn" onclick="copyField('cast-device-id', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Model</div>
+        <div class="meta-value">Google TV</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Protocol</div>
+        <div class="meta-value">Chromecast v2</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">mDNS Service</div>
+        <div class="meta-value">_googlecast._tcp</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Port</div>
+        <div class="meta-value">{{ cast_port }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Google TV Emulator &mdash; local network broadcast active
+  </div>
+
+  <script>
+    function copyField(fieldId, btn) {
+      const text = document.getElementById(fieldId).textContent.trim();
+      const original = btn.innerHTML;
+
+      function showCopied() {
+        btn.classList.add('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied!';
+        setTimeout(function () {
+          btn.classList.remove('copied');
+          btn.innerHTML = original;
+        }, 2000);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(function () {
+          legacyCopy(text);
+          showCopied();
+        });
+      } else {
+        legacyCopy(text);
+        showCopied();
+      }
+    }
+
+    /* Fallback for browsers that do not support the Clipboard API.
+       document.execCommand('copy') is deprecated but remains broadly
+       supported and is the only option in non-secure (non-HTTPS) contexts. */
+    function legacyCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy'); /* eslint-disable-line deprecation/deprecation */
+      document.body.removeChild(ta);
+    }
+  </script>
+</body>
+</html>
