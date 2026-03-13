@@ -1,0 +1,14 @@
+# Device identity (generated on first run – do not commit)
+.device_config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
