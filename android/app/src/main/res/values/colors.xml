@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="color_primary">#1565C0</color>
+    <color name="color_primary_dark">#0D47A1</color>
+    <color name="color_accent">#FFC107</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="log_background">#0D1117</color>
+    <color name="log_text">#39FF14</color>
+    <color name="log_text_error">#FF5555</color>
+    <color name="log_text_info">#57C7FF</color>
+    <color name="section_header">#1565C0</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="status_running">#2E7D32</color>
+    <color name="status_idle">#616161</color>
+    <color name="status_stopped">#C62828</color>
+</resources>

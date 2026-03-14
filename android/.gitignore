@@ -1,0 +1,6 @@
+# Build directory (intermediate artifacts only)
+build/
+.gradle/
+local.properties
+.idea/
+*.iml
