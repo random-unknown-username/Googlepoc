@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Android Auto Diagnostic Tool</string>
+    <string name="label_target_ip">Target IP Address</string>
+    <string name="label_target_port">Target Port</string>
+    <string name="hint_target_ip">e.g. 192.168.1.100</string>
+    <string name="hint_target_port">e.g. 5288</string>
+    <string name="label_service_network">Service Network Name (optional)</string>
+    <string name="hint_service_network">SSID / network name</string>
+    <string name="label_bt_device">Bluetooth Device Name (optional)</string>
+    <string name="hint_bt_device">BT device name</string>
+    <string name="label_flags">Extra Flags (optional)</string>
+    <string name="hint_flags">key=value pairs, comma-separated</string>
+    <string name="btn_start_test">Start Test</string>
+    <string name="btn_stop_server">Stop Server</string>
+    <string name="btn_clear_logs">Clear Logs</string>
+    <string name="btn_save_logs">Save Logs</string>
+    <string name="server_status_idle">Server: Idle</string>
+    <string name="server_status_running">Server: Listening</string>
+    <string name="server_status_stopped">Server: Stopped</string>
+    <string name="log_console_hint">Diagnostic log will appear here…</string>
+    <string name="section_params">Connection Parameters</string>
+    <string name="section_optional">Optional Parameters</string>
+    <string name="section_log">Connection Log</string>
+    <string name="app_description">Launches Android Auto WirelessStartupActivity and listens for the resulting TCP connection on the specified port. Use this tool to observe how Android Auto behaves when given different connection parameters.</string>
+</resources>
