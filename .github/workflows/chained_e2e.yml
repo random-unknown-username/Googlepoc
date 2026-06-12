@@ -1,0 +1,59 @@
+name: Testing E2E Chained
+
+on:
+  workflow_run:
+    workflows: ["Trigger E2E"]
+    types: [completed]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  download_repo_name:
+    runs-on: ubuntu-latest
+    outputs:
+      repo_name: ${{ steps.out.outputs.repo_name }}
+      head_sha: ${{ steps.out.outputs.head_sha }}
+
+    steps:
+      - name: Download repo_name artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: repo_name
+          run-id: ${{ github.event.workflow_run.id }}
+          path: artifacts
+
+      - name: Read repo/SHA from artifact
+        id: out
+        run: |
+          echo "repo_name=$(cat artifacts/repo_name)" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(cat artifacts/head_sha)" >> "$GITHUB_OUTPUT"
+          echo "Artifact repo_name: $(cat artifacts/repo_name)"
+          echo "Artifact head_sha: $(cat artifacts/head_sha)"
+
+  privileged_checkout_and_run:
+    runs-on: ubuntu-latest
+    needs: download_repo_name
+
+    steps:
+      - name: Checkout attacker-selected repo/SHA
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ needs.download_repo_name.outputs.repo_name }}
+          ref: ${{ needs.download_repo_name.outputs.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run attacker-controlled build with dummy secret
+        env:
+          FAKE_GEMINI_API_KEY: ${{ secrets.FAKE_GEMINI_API_KEY }}
+        run: npm run build
